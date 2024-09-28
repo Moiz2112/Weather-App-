@@ -1,0 +1,160 @@
+public class WeatherDetail {
+    @AuraEnabled(cacheable=true)
+    public static WeatherDetailsWrapper getWeatherDetails(String cityName){
+         String key = Label.ApiKey;
+         String endPoint = 'http://api.weatherapi.com/v1/current.json?key='+key+'&q='+cityName+'&aqi=no'; 
+             
+        Http http =new http();
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint(endpoint);
+        req.setMethod('GET');
+        HttpResponse res = http.send(req);
+        System.debug('STATUS CODE'+ res.getStatusCode());    
+        
+        WeatherDetailsWrapper weatherDet = new WeatherDetailsWrapper();
+        if(res.getStatusCode() == 200){
+            Map<String,object> result = (Map<String,Object>)JSON.deserializeUntyped(res.getBody());
+            Map<String,Object> Locationres = (Map<String,Object>)result.get('location');
+            Map<String,object> currentWeather = (Map<String,object>)result.get('current');
+            Map<String, Object> WeatherCondition = (Map<String, Object>)currentWeather.get('condition');
+            
+            weatherDet.city = (String)Locationres.get('name');
+            weatherDet.temperature = (Decimal)currentWeather.get('temp_c');
+            weatherDet.pressure = (Decimal)currentWeather.get('pressure_in');
+            weatherDet.humidity = (Integer)currentWeather.get('humidity');
+            weatherDet.feelsLike= (Decimal)currentWeather.get('feelslike_c');
+            weatherDet.Condition = (String)WeatherCondition.get('text');
+            weatherDet.Icon = (String)WeatherCondition.get('icon');
+         }
+        system.debug('weather details to return=> '+weatherDet);
+        return weatherDet;
+        
+    }
+
+ @AuraEnabled(cacheable=true)
+   public static List<WeatherDetailsWrapper> getForecaseWeather(String cityName, Integer Days) {
+      System.debug('days'+ Days);
+      String key = Label.ApiKey;
+      String endPoint = 'http://api.weatherapi.com/v1/forecast.json?key=' + key + '&q=' + cityName + '&days=' + Days + '&aqi=no&alerts=no';
+
+    List<WeatherDetailsWrapper> weatherForecastList = new List<WeatherDetailsWrapper>();
+
+    Http http = new Http();
+    HttpRequest req = new HttpRequest();
+    req.setEndPoint(endPoint);
+    req.setMethod('GET');
+
+    HttpResponse response = http.send(req);
+    System.debug('StatusCode ' + response.getStatusCode());
+    
+    if (response.getBody() != null) {
+        Map<String, Object> weather = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
+        Map<String, Object> currWeather = (Map<String,Object>)weather.get('current');
+        Map<String, Object> WeatherCondition = (Map<String, Object>)currWeather.get('condition');
+        Map<String, Object> forecast = (Map<String, Object>) weather.get('forecast');
+        List<Object> forecastDays = (List<Object>) forecast.get('forecastday');
+
+        for (Object dayObj : forecastDays) {
+            Map<String, Object> dayMap = (Map<String, Object>) dayObj;
+            List<Object> hourlyData = (List<Object>) dayMap.get('hour');
+
+             for (Object hourObj : hourlyData) {
+                Map<String, Object> hourDetails = (Map<String, Object>) hourObj;
+                String Weathertime = (String) hourDetails.get('time');
+                
+                 if (Weathertime.contains('00:00')) {
+                    WeatherDetailsWrapper weatherForecast = new WeatherDetailsWrapper();
+                    Map<String, Object> dayDetails = (Map<String, Object>) dayMap.get('day');
+                    
+                    weatherForecast.temperature = (Decimal) dayDetails.get('avgtemp_c');
+                    weatherForecast.tempMax = (Decimal) dayDetails.get('maxtemp_c');
+                    weatherForecast.tempMin = (Decimal) dayDetails.get('mintemp_c');
+                    weatherForecast.humidity = (Integer) hourDetails.get('humidity');
+                    weatherForecast.feelsLike = (Decimal) hourDetails.get('feelslike_c');
+                    weatherForecast.condition = (String) WeatherCondition.get('text');
+                    weatherForecast.ForecDate = (String) dayMap.get('date');
+                    
+                    System.debug('Weather Forecast'+weatherForecast);
+                    weatherForecastList.add(weatherForecast);
+           
+                }
+            }
+        }
+    }
+    
+    return weatherForecastList;
+}
+    
+@AuraEnabled(cacheable=true)
+public static List<WeatherDetailsWrapper> getHourlyForecastWeather(String cityName, Integer Days) {
+    //System.debug('days'+Days);
+    String key = Label.ApiKey;
+    String endPoint = 'http://api.weatherapi.com/v1/forecast.json?key=' + key + '&q=' + cityName + '&days=' + Days + '&aqi=no&alerts=no';
+
+    List<WeatherDetailsWrapper> hourlyWeatherList = new List<WeatherDetailsWrapper>();
+
+    Http http = new Http();
+    HttpRequest req = new HttpRequest();
+    req.setEndPoint(endPoint);
+    req.setMethod('GET');
+
+    HttpResponse response = http.send(req);
+    System.debug('StatusCode ' + response.getStatusCode());
+    
+    if (response.getBody() != null) {
+        Map<String, Object> weather = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
+        Map<String, Object> currWeather = (Map<String,Object>)weather.get('current');
+        Map<String, Object> WeatherCondition = (Map<String, Object>)currWeather.get('condition');
+        Map<String, Object> forecast = (Map<String, Object>) weather.get('forecast');
+        List<Object> forecastDays = (List<Object>) forecast.get('forecastday');
+
+        for (Object dayObj : forecastDays) {
+            Map<String, Object> dayMap = (Map<String, Object>) dayObj;
+             List<Object> hourlyData = (List<Object>) dayMap.get('hour');
+
+            for (Object hourObj : hourlyData) {
+                Map<String, Object> hourDetails = (Map<String, Object>) hourObj;
+                WeatherDetailsWrapper hourlyWeather = new WeatherDetailsWrapper();
+                 hourlyWeather.temperature = (Decimal) hourDetails.get('temp_c');
+                hourlyWeather.humidity = (Integer) hourDetails.get('humidity');
+                hourlyWeather.weatherTime = (String) hourDetails.get('time');
+                hourlyWeather.feelsLike = (Decimal) hourDetails.get('feelslike_c');
+                hourlyWeather.condition = (String) WeatherCondition.get('text');
+          
+                System.debug('Hourly Weather Forecast' + hourlyWeather);
+                hourlyWeatherList.add(hourlyWeather);
+            }
+        }
+    }
+    
+    return hourlyWeatherList;
+}
+   @AuraEnabled(cacheable=true) 
+    public static List<String> getCityName(String Name){
+        List<String> CityName = new List<String>();
+        List<City__mdt> country = [Select City_Name__c From City__mdt Where City_Name__c Like : Name+'%' Limit 3];
+         for(City__mdt city : country){
+            cityName.add(city.City_Name__c);
+        }
+        System.Debug('Result' + CityName);
+        return CityName;
+        
+    }
+    
+     public class WeatherDetailsWrapper {
+      @AuraEnabled  public String city {get;set;}
+      @AuraEnabled  public Decimal temperature {get;set;}
+      @AuraEnabled  public Decimal pressure {get;set;}
+      @AuraEnabled  public Integer humidity {get;set;}
+      @AuraEnabled  public Decimal feelsLike {get;set;}
+      @AuraEnabled  public Decimal tempMin {get;set;}
+      @AuraEnabled  public Decimal tempMax {get;set;}
+      @AuraEnabled  public String Condition {get;set;}
+      @AuraEnabled  public String WeatherTime {get;set;} 
+      @AuraEnabled  public String ForecDate {get;set;}
+      @AuraEnabled  public String Icon {get;set;}
+       
+      
+    }
+    
+}

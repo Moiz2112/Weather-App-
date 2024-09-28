@@ -1,0 +1,99 @@
+<template>
+    <lightning-card title="Weather Details" icon-name="utility:world">
+         <div class="slds-p-around_medium">
+            <lightning-input
+            label="Enter City Name"
+            value={cityName}
+            onchange={handleCityChange}
+            onkeyup={handleKeyUp}>
+        </lightning-input>
+
+         
+        <template if:true={showDropdown}>
+            <div class="slds-box slds-theme_default">
+                <ul class="slds-listbox slds-listbox_vertical" role="listbox">
+                    <template for:each={cityOptions} for:item="city">
+                        <li key={city.value} class="slds-listbox__item" role="presentation">
+                            <div
+                                role="option"
+                                class="slds-listbox__option slds-listbox__option_plain"
+                                onclick={handleCitySelect}>
+                                {city.label}
+                            </div>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+        </template><br>
+            <lightning-button label="Get Current Weather" onclick={handleCLick} class="slds-m-top_medium"></lightning-button>
+        </div>
+
+         <template if:true={currentWeatherData}>
+            <div class="slds-p-around_medium">
+                <p><strong>City:</strong> {currentWeatherData.city}</p>
+                <p><strong>Temperature:</strong> {currentWeatherData.temperature} °C</p>
+                <p><strong>Feels Like:</strong> {currentWeatherData.feelsLike} °C</p>
+                <p style="position: relative;"><strong>Condition:</strong> {currentWeatherData.Condition}
+                <img src={currentWeatherData.Icon} alt = 'Weather image' style="position: absolute; width: 60px; top: calc(50% - 30px);">
+                </p>
+                <p><strong>Pressure:</strong> {currentWeatherData.pressure} in</p>
+                <p><strong>Humidity:</strong> {currentWeatherData.humidity} %</p>
+                <!-- <img src={currentWeatherData.Icon} alt = 'Weather image'> -->
+            </div>
+        </template>
+        <template if:true={showFutureWeather}>
+         <div class="slds-p-around_medium">
+            <lightning-button label="Get Future Forecast" onclick={toggleDayInput} class="slds-m-top_medium"></lightning-button>
+        </div>
+    </template>
+         <template if:true={showDayInput}>
+            <div class="slds-p-around_medium">
+                <lightning-input type="number" label="Enter Number of Days" value={days} onchange={handleDayChange}></lightning-input>
+                <lightning-button label="Get Forecast Weather" onclick={handleGetForecastWeather} class="slds-m-top_medium"></lightning-button>
+            </div>
+        </template>
+
+ <template if:true={forecastWeatherData}>
+    <div class="slds-p-around_medium">
+        <template for:each={forecastWeatherData} for:item="day">
+            <div key={day.ForecDate}>
+                <p><strong>Date:</strong> {day.ForecDate}</p>
+                <p><strong>Temperature:</strong> {day.temperature} °C</p>
+                <p><strong>Feels Like:</strong> {day.feelsLike} °C</p>
+                <p style="position: relative;"><strong>Condition:</strong> {day.Condition}
+                <img src={currentWeatherData.Icon} alt = 'Weather image' style="position: absolute; width: 60px; top: calc(50% - 30px);">
+                </p>
+                <p><strong>Humidity:</strong> {day.humidity} %</p>
+                <p><strong>Maximum Temperature:</strong> {day.tempMax} °C</p>
+                <p><strong>Minimum Temperature:</strong> {day.tempMin} °C</p><br>
+            </div>
+        </template>
+     
+            </div>
+        </template>
+
+         <template if:true={error}>
+            <p class="slds-text-color_error">Error: {error}</p>
+        </template>
+
+        <!-- Hourly weather button -->
+         
+        <div class="slds-p-around_medium">
+            <lightning-button label="Get Hourly Weather" onclick={handleGetHourlyWeather} class="slds-m-top_medium"></lightning-button>
+        </div>
+        <template if:true={hourlyWeatherData}>
+    <div class="slds-p-around_medium">
+        <template for:each={hourlyWeatherData} for:item="hour">
+            <div key={hour.WeatherTime} class="slds-box slds-box_x-small slds-m-bottom_small">
+                 <p><strong>Date Time:</strong> {hour.WeatherTime}</p>
+                 <p><strong>Temperature:</strong> {hour.temperature} °C</p>
+                 <p><strong>Feels Like:</strong> {hour.feelsLike}</p>
+             </div>
+        </template>
+        <template if:true={error}>
+            <p class="slds-text-color_error">Error: {error}</p>
+        </template>
+            </div>
+        </template>
+    </lightning-card>
+</template>
